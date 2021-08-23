@@ -22,31 +22,27 @@ CORS(app)
 setup_admin(app)
 
 
-# Handle/serialize errors like a JSON object
 @app.errorhandler(APIException)
 def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code
 
 
-# generate sitemap with all your endpoints
+
 @app.route('/')
 def sitemap():
     return generate_sitemap(app)
 
 
-
-# Metodos Get
-
-@app.route('/user', methods=['GET'])
+@app.route('/account', methods=['GET'])
 def get_user():
     all_user = Account.get_all() 
     if all_user:
         return jsonify(all_user), 200
 
-    return jsonify({'message': 'No account created'}), 500
+    return jsonify({'message': 'No account created, so make one!'}), 500
 
 
-@app.route('/user/<int:id>', methods=['GET'])
+@app.route('/account/<int:id>', methods=['GET'])
 def get_one_user(id):
     one_user = Account.get_by_id(id) 
     if one_user:
@@ -54,8 +50,8 @@ def get_one_user(id):
 
     return jsonify({'message': 'No account'}), 500
 
-#Todos los task 
-@app.route('/user/<int:id>/tasks', methods=['GET'])
+
+@app.route('/account/<int:id>/tasks', methods=['GET'])
 def get_task(id):
 
     user_tasks = Task.get_task_by_user(id) 
@@ -65,23 +61,21 @@ def get_task(id):
 
     return jsonify(user_tasks), 200
     
-#Task specific
 @app.route('/user/<int:id>/tasks/<int:position>', methods=['GET'])
 def get_specific_task(id, position):
 
     user_tasks = Task.get_task_by_user(id) 
 
-    #add filtrado por status active y por position.
+
 
 
     if not user_tasks:
-        return jsonify({'message': 'Not specific task found'}), 200
+        return jsonify({'message': 'Not specific task found, boo hoo'}), 200
 
     return jsonify(user_tasks), 200
 
-#Metodos post
 
-@app.route('/user', methods=['POST'])
+@app.route('/account', methods=['POST'])
 def create_user_task():
 
     nick = request.json.get('nick', None)
@@ -95,15 +89,14 @@ def create_user_task():
     return jsonify(user.to_dict()),201
 
     
-@app.route('/user/<int:id>/tasks', methods=['POST'])
+@app.route('/account/<int:id>/tasks', methods=['POST'])
 def add_new_task(id):
     label = request.json.get('label', None)
-    status = request.json.get('status', None)
     
-    if not (label and status and id):
-        return {'error': 'No enough info'}, 400
+    if not (label and id):
+        return {'error': 'No enough info, baby'}, 400
 
-    task= Task(label = label, status=status, account_id=id)
+    task= Task(label = label, account_id=id)
     task.add_new()
 
     return jsonify(task.to_dict()),201
@@ -112,7 +105,7 @@ def add_new_task(id):
     return jsonify(task)
 
 
-@app.route('/user/<int:id>', methods = ['DELETE'])
+@app.route('/account/<int:id>', methods = ['DELETE'])
 def delete_account(id):
     account = Account.get_by_id(id)
 
@@ -120,7 +113,7 @@ def delete_account(id):
         account.delete()
         return jsonify(account.to_dict()), 200
 
-    return jsonify({'msg' : 'Account not foud'}), 404
+    return jsonify({'msg' : 'Account not found sadface'}), 404
 
 
 @app.route('/account/<int:id>', methods = ["PATCH"])
@@ -128,18 +121,17 @@ def update_account_by_id(id):
     account = Account.read_by_id(id)
 
     if not account:
-        return jsonify({'msg': 'account not found'}), 404
+        return jsonify({'msg': 'account not found...Yet'}), 404
 
     new_nick = request.json.get('nick', None)
     if new_nick and not Account.get_by_nick(new_nick):
         account.update(new_nick)
         return jsonify(account.to_dict()), 200
 
-    return jsonify({'msg': 'Try another nick'}), 400
+    return jsonify({'msg': 'Try another nick, please'}), 400
     
 
-#Metodo delete
-@app.route('/user/<int:id>/tasks/<int:position>', methods=['DELETE'])
+@app.route('/account/<int:id>/tasks/<int:position>', methods=['DELETE'])
 def delete_user_task(id, position):
     
     task_to_delete = Task.get_one_task(position)
